@@ -1,54 +1,18 @@
-.PHONY: docker-builder vic-cloud vic-gateway
-
-docker-builder:
-	docker build -t armbuilder docker-builder/.
+.PHONY: vic-cloud vic-gateway
 
 all: vic-cloud vic-gateway
 
 go_deps:
-	echo `go version` && cd $(PWD) && go mod download
+	echo `/usr/local/go/bin/go version` && cd $(PWD) && /usr/local/go/bin/go mod download
 
 vic-cloud: go_deps
-	docker container run  \
-	-v "$(PWD)":/go/src/digital-dream-labs/vector-cloud \
-	-v $(GOPATH)/pkg/mod:/go/pkg/mod \
-	-w /go/src/digital-dream-labs/vector-cloud \
-	--user $(UID):$(GID) \
-	armbuilder \
-	go build  \
-	-tags nolibopusfile,vicos \
-	--trimpath \
-	-ldflags '-w -s -linkmode internal -extldflags "-static" -r /anki/lib' \
-	-o build/vic-cloud \
-	cloud/main.go
+	CGO_ENABLED=1 GOARM=7 GOARCH=arm CC=/home/build/.anki/vicos-sdk/dist/1.1.0-r04/prebuilt/bin/arm-oe-linux-gnueabi-clang CXX=/home/build/.anki/vicos-sdk/dist/1.1.0-r04/prebuilt/bin/arm-oe-linux-gnueabi-clang++ PKG_CONFIG_PATH="$(PWD)/armlibs/lib/pkgconfig" CGO_CFLAGS="-I$(PWD)/armlibs/include -I$(PWD)/armlibs/include/opus -I$(PWD)/armlibs/include/ogg" CGO_CXXFLAGS="-stdlib=libc++ -std=c++11" CGO_LDFLAGS="-L$(PWD)/armlibs/lib -L$(PWD)/armlibs/lib/arm-linux-gnueabi/android" /usr/local/go/bin/go build -tags nolibopusfile,vicos -ldflags '-w -s -linkmode internal -extldflags "-static" -r /anki/lib' -o build/vic-cloud cloud/main.go
 
-	docker container run \
-	-v "$(PWD)":/go/src/digital-dream-labs/vector-cloud \
-	-v $(GOPATH)/pkg/mod:/go/pkg/mod \
-	-w /go/src/digital-dream-labs/vector-cloud \
-	--user $(UID):$(GID) \
-	armbuilder \
 	upx build/vic-cloud
 
 
 vic-gateway: go_deps
-	docker container run \
-	-v "$(PWD)":/go/src/digital-dream-labs/vector-cloud \
-	-v $(GOPATH)/pkg/mod:/go/pkg/mod \
-	-w /go/src/digital-dream-labs/vector-cloud \
-	--user $(UID):$(GID) \
-	armbuilder \
-	go build  \
-	-tags nolibopusfile,vicos \
-	--trimpath \
-	-ldflags '-w -s -linkmode internal -extldflags "-static" -r /anki/lib' \
-	-o build/vic-gateway \
-	gateway/*.go
+	CGO_ENABLED=1 GOARM=7 GOARCH=arm CC=/home/build/.anki/vicos-sdk/dist/1.1.0-r04/prebuilt/bin/arm-oe-linux-gnueabi-clang CXX=/home/build/.anki/vicos-sdk/dist/1.1.0-r04/prebuilt/bin/arm-oe-linux-gnueabi-clang++ PKG_CONFIG_PATH="$(PWD)/armlibs/lib/pkgconfig" CGO_CFLAGS="-I$(PWD)/armlibs/include -I$(PWD)/armlibs/include/opus -I$(PWD)/armlibs/include/ogg" CGO_CXXFLAGS="-stdlib=libc++ -std=c++11" CGO_LDFLAGS="-L$(PWD)/armlibs/lib -L$(PWD)/armlibs/lib/arm-linux-gnueabi/android" /usr/local/go/bin/go build -tags nolibopusfile,vicos -ldflags '-w -s -linkmode internal -extldflags "-static" -r /anki/lib' -o build/vic-gateway gateway/*.go
 
-	docker container run \
-	-v "$(PWD)":/go/src/digital-dream-labs/vector-cloud \
-	-v $(GOPATH)/pkg/mod:/go/pkg/mod \
-	-w /go/src/digital-dream-labs/vector-cloud \
-	--user $(UID):$(GID) \
-	armbuilder \
 	upx build/vic-gateway
+
